@@ -1,0 +1,144 @@
+<!-- Formulário de preenchimento -->
+<h3>Cadastro</h3>
+<div id="formulario">
+  <input type="text" id="nome" placeholder="Nome da empresa / projeto"><br>
+  <input type="text" id="endereco" placeholder="Endereço completo"><br>
+  <input type="text" id="descricao" placeholder="Descrição chamativa"><br>
+  <input type="text" id="contato" placeholder="Contato / rede social"><br>
+  <input type="text" id="palavras" placeholder="Palavras-chave (opcional)"><br>
+  <button onclick="gerarScript()">Gerar Script</button>
+</div>
+
+<!-- Área onde o script gerado será exibido -->
+<h3>Script Gerado</h3>
+<pre id="scriptGerado" class="bloco-script"></pre>
+<button onclick="criarJanela()">Criar Janela para Colar</button>
+
+<!-- Área de colagem -->
+<h3>Área de Colagem</h3>
+<div id="janelaRecepcao" contenteditable="true" class="janela-html">
+  <p>Cole aqui o script gerado...</p>
+</div>
+<button onclick="salvarPostagem()">Salvar Postagem</button>
+
+<!-- Área de postagens salvas -->
+<h3>Postagens Fixas</h3>
+<div id="postagensFixas"></div>
+
+<script>
+  let scriptHTML = "";
+
+  function gerarScript() {
+    const nome = document.getElementById("nome").value;
+    const endereco = document.getElementById("endereco").value;
+    const descricao = document.getElementById("descricao").value;
+    const contato = document.getElementById("contato").value;
+    const palavras = document.getElementById("palavras").value;
+
+    scriptHTML = `
+<div class="divulgacao-bloco" itemscope itemtype="https://schema.org/BlogPosting">
+  <h2 itemprop="headline">${nome}</h2>
+  <p><strong>Endereço:</strong> <span itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
+    <span itemprop="streetAddress">${endereco}</span></span></p>
+  <p itemprop="description"><strong>Descrição:</strong> ${descricao}</p>
+  <p><strong>Contato:</strong> <span itemprop="creator">${contato}</span></p>
+  <p><strong>Palavras-chave:</strong> <span itemprop="keywords">${palavras}</span></p>
+</div>
+    `.trim();
+
+    document.getElementById("scriptGerado").textContent = scriptHTML;
+  }
+
+  function criarJanela() {
+    const novaDiv = document.createElement("div");
+    novaDiv.className = "janela-html";
+    novaDiv.contentEditable = true;
+    novaDiv.innerText = scriptHTML;
+
+    document.getElementById("janelaRecepcao").replaceWith(novaDiv);
+    novaDiv.id = "janelaRecepcao";
+  }
+
+  function salvarPostagem() {
+    const conteudo = document.getElementById("janelaRecepcao").innerText;
+
+    const bloco = document.createElement("article");
+    bloco.className = "bloco-script";
+    bloco.setAttribute("itemscope", "");
+    bloco.setAttribute("itemtype", "https://schema.org/BlogPosting");
+
+    bloco.innerHTML = `
+      <div itemprop="articleBody">
+        <pre>${conteudo}</pre>
+      </div>
+    `;
+
+    document.getElementById("postagensFixas").appendChild(bloco);
+
+    let salvos = JSON.parse(localStorage.getItem("postagensFixas") || "[]");
+    salvos.push(conteudo);
+    localStorage.setItem("postagensFixas", JSON.stringify(salvos));
+
+    document.getElementById("janelaRecepcao").innerHTML = "<p>Cole aqui o script gerado...</p>";
+  }
+
+  function restaurarPostagem() {
+    const salvos = JSON.parse(localStorage.getItem("postagensFixas") || "[]");
+    salvos.forEach(function(script) {
+      const bloco = document.createElement("article");
+      bloco.className = "bloco-script";
+      bloco.setAttribute("itemscope", "");
+      bloco.setAttribute("itemtype", "https://schema.org/BlogPosting");
+
+      bloco.innerHTML = `
+        <div itemprop="articleBody">
+          <pre>${script}</pre>
+        </div>
+      `;
+      document.getElementById("postagensFixas").appendChild(bloco);
+    });
+  }
+
+  window.addEventListener("load", restaurarPostagem);
+</script>
+
+<style>
+  input {
+    margin: 5px 0;
+    padding: 8px;
+    width: 100%;
+    max-width: 400px;
+    font-size: 14px;
+  }
+
+  button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-weight: bold;
+    background-color: #0077cc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .bloco-script {
+    border: 2px solid #0077cc;
+    padding: 15px;
+    margin-top: 15px;
+    background-color: #eef;
+    white-space: pre-wrap;
+    font-family: monospace;
+  }
+
+  .janela-html {
+    border: 2px dashed #888;
+    padding: 20px;
+    margin-top: 20px;
+    background-color: #fff;
+    min-height: 100px;
+    border-radius: 6px;
+    font-family: monospace;
+    white-space: pre-wrap;
+  }
+</style>
